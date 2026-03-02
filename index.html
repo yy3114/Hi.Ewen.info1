@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>給怡文的訊息</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 HanziWriter 庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <!-- 引入 Google Fonts: 馬善政毛筆楷書 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', sans-serif;
+            overflow: hidden;
+            background-color: #fcf9f2; /* 溫暖的紙張底色 */
+        }
+        
+        .handwritten-font {
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        /* 飄落花瓣動畫 */
+        .petal {
+            position: absolute;
+            background: linear-gradient(135deg, #fbcfe8 0%, #f472b6 100%);
+            border-radius: 15px 0 15px 0;
+            opacity: 0.6;
+            pointer-events: none;
+            animation: fall linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(110vh) rotate(360deg) translateX(30px); opacity: 0; }
+        }
+
+        /* 信紙卡片樣式 */
+        .paper-card {
+            position: relative;
+            z-index: 10;
+            /* 輕微的紙張雜訊紋理，增加實體感 */
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        /* 標點符號的淡入動畫 */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* 文字排版容器 */
+        #text-container {
+            line-height: 2; /* 較寬的行高，適合手寫風格 */
+            align-content: flex-start;
+        }
+        
+        /* 隱藏按鈕用 */
+        .hidden-item {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-50 via-pink-100 to-orange-50 min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+
+    <!-- 信紙主體 -->
+    <div class="paper-card rounded-xl shadow-2xl border border-white/60 p-6 sm:p-12 max-w-2xl w-full">
+        
+        <!-- 動態文字容器：flex-wrap 讓字體自動換行 -->
+        <div id="text-container" class="flex flex-wrap justify-start items-center mb-8 min-h-[200px] text-gray-800">
+            <!-- 程式會在這裡「無中生有」一個字一個字寫出來 -->
+        </div>
+
+        <!-- 重新播放按鈕 -->
+        <div class="flex justify-end mt-2">
+            <button id="replay-btn" class="bg-transparent hover:bg-rose-50 text-rose-500 hover:text-rose-600 font-medium py-2 px-6 rounded-md border border-rose-200 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-rose-200 hidden-item">
+                再次感受
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const message = "怡文，下班記得給自己一點小獎勵，甜點也好、耍廢也好～妳值得。❤️";
+            const container = document.getElementById('text-container');
+            const btn = document.getElementById('replay-btn');
+            
+            // 響應式字體大小：手機版小一點，電腦版大一點
+            const isMobile = window.innerWidth < 500;
+            const charSize = isMobile ? 32 : 44;
+            // 筆墨顏色 (深炭灰/暖灰)
+            const brushColor = '#3f3f46'; 
+
+            // 核心寫字非同步函數
+            async function writeLetter() {
+                // 1. 初始化狀態
+                btn.classList.add('hidden-item'); // 隱藏按鈕
+                container.innerHTML = '';         // 清空信紙
+                
+                // 動畫開始前，稍微深呼吸停頓一下
+                await new Promise(r => setTimeout(r, 800));
+
+                // 2. 開始逐字迴圈
+                for (let i = 0; i < message.length; i++) {
+                    const char = message[i];
+                    
+                    // 動態建立這個字的 DOM 容器 (這時它才佔用畫面空間)
+                    const span = document.createElement('div');
+                    span.className = 'inline-flex items-center justify-center';
+                    span.style.width = charSize + 'px';
+                    span.style.height = charSize + 'px';
+                    span.style.marginRight = isMobile ? '2px' : '4px';
+                    
+                    // 將這個字元容器加入信紙中
+                    container.appendChild(span);
+                    
+                    // 判斷是否為中文字 (要畫筆畫)
+                    if (/[\u4e00-\u9fa5]/.test(char)) {
+                        // 給予唯一 ID 讓 HanziWriter 綁定
+                        span.id = `char-${Date.now()}-${i}`; 
+                        
+                        // 建立筆畫書寫器
+                        const writer = HanziWriter.create(span.id, char, {
+                            width: charSize,
+                            height: charSize,
+                            padding: 2,
+                            strokeAnimationSpeed: 1.5, // 畫每一筆的速度
+                            delayBetweenStrokes: 50,   // 筆畫之間的停頓
+                            strokeColor: brushColor,
+                            showCharacter: false,      // 一開始絕對不要顯示完整的字
+                            showOutline: false         // 不要顯示底線輪廓
+                        });
+
+                        // 關鍵：等待這個字「完完全全畫完」才繼續
+                        await new Promise(resolve => {
+                            let isDone = false;
+                            
+                            // 保險機制：萬一這個字無法繪製，8 秒後強行跳下一個字避免卡死
+                            const safetyTimeout = setTimeout(() => {
+                                if (!isDone) {
+                                    isDone = true;
+                                    resolve();
+                                }
+                            }, 8000);
+
+                            // 開始畫字
+                            writer.animateCharacter({
+                                onComplete: () => {
+                                    if (!isDone) {
+                                        isDone = true;
+                                        clearTimeout(safetyTimeout);
+                                        resolve();
+                                    }
+                                }
+                            });
+                        });
+                        
+                        // 字與字之間稍微提筆停頓
+                        await new Promise(r => setTimeout(r, 120));
+
+                    } else {
+                        // 如果是標點符號或愛心 (不使用 HanziWriter 畫)
+                        span.innerText = char;
+                        span.className += ' handwritten-font'; // 套用手寫字型
+                        span.style.color = char === '❤️' ? '#ef4444' : brushColor;
+                        span.style.opacity = '0'; // 初始透明
+                        
+                        // 微調標點符號的大小與位置
+                        if (char === '❤️') {
+                            span.style.fontSize = (charSize * 0.6) + 'px';
+                            span.style.transform = 'translateY(2px)';
+                        } else {
+                            span.style.fontSize = (charSize * 0.8) + 'px';
+                            if (['，', '。', '、'].includes(char)) {
+                                span.style.transform = 'translateY(6px)'; // 讓逗號句號沉一點
+                                span.style.marginRight = '8px';
+                            }
+                        }
+
+                        // 觸發淡入動畫
+                        span.classList.add('fade-in');
+                        
+                        // 寫完標點符號後，根據語氣停頓更久一點
+                        let pauseTime = 200;
+                        if (char === '，' || char === '、') pauseTime = 600; // 逗號停半秒
+                        if (char === '。' || char === '～') pauseTime = 900; // 句號停更久
+                        
+                        await new Promise(r => setTimeout(r, pauseTime));
+                    }
+                    
+                    // 自動將畫面捲動到最新寫的字 (若文字太多換行時)
+                    container.scrollTop = container.scrollHeight;
+                }
+
+                // 3. 整封信寫完後
+                await new Promise(r => setTimeout(r, 800)); // 寫完後稍微留白
+                btn.classList.remove('hidden-item');      // 顯示再次感受按鈕
+                btn.classList.add('fade-in');
+            }
+
+            // 產生飄落的櫻花背景裝飾
+            function createPetals() {
+                const petalCount = 18;
+                for (let i = 0; i < petalCount; i++) {
+                    let petal = document.createElement('div');
+                    petal.classList.add('petal');
+                    petal.style.left = Math.random() * 100 + 'vw';
+                    petal.style.width = (Math.random() * 10 + 6) + 'px';
+                    petal.style.height = (Math.random() * 10 + 6) + 'px';
+                    petal.style.animationDuration = (Math.random() * 6 + 6) + 's';
+                    petal.style.animationDelay = (Math.random() * 5) + 's';
+                    document.body.appendChild(petal);
+                }
+            }
+
+            // 啟動程序
+            createPetals();
+            writeLetter(); // 頁面載入自動開始寫信
+            
+            // 綁定按鈕點擊事件
+            btn.addEventListener('click', writeLetter);
+        });
+    </script>
+</body>
+</html>
+
